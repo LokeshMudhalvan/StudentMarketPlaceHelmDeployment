@@ -1,0 +1,72 @@
+deployment:
+  - image: lokeshmudhalvan/student-marketplace-frontend
+    tag: 0.0.7
+    replicas: 1
+    name: student-marketplace-frontend
+    labels: 
+      app: student-marketplace-frontend
+    port: 3001
+    backend: False 
+
+  - image: lokeshmudhalvan/student-marketplace-backend
+    tag: 0.0.2
+    replicas: 1
+    name: student-marketplace-backend
+    labels: 
+      app: student-marketplace-backend
+    port: 5001
+    backend: True
+
+
+postgres: # Postgres setup variables
+  secret:
+    enabled: True
+    secretName: postgres-secret
+    env:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: StudentMarketplace
+
+  statefulSet:
+    name: student-marketplace-db
+    replicas: 1
+    image: postgres
+    tag: 15
+    labels:
+      app: postgres
+    port: 5432
+    headless: db # Use the same name as the headless service
+
+service: 
+  - headless: True
+    type: ClusterIP
+    name: db
+    matchLabels:
+      app: postgres
+    targetPort: 5432
+    # Ex: "port: 8000" to use a port of your choice. Defaulted to the same port number as target port 
+  - headless: False
+    type: ClusterIP
+    name: backend-service
+    matchLabels:
+      app: student-marketplace-backend
+    targetPort: 5001 
+  - headless: False
+    type: ClusterIP
+    name: frontend-service
+    matchLabels:
+      app: student-marketplace-frontend
+    targetPort: 3001
+    
+ingress: 
+  - type: ingress #ingress or ingressroute
+    name: frontend-ingress
+    hostname: student-market-place
+    service: frontend-service
+    port: 3001
+
+  - type: ingress 
+    name: backend-ingress
+    hostname: backend
+    service: backend-service
+    port: 5001

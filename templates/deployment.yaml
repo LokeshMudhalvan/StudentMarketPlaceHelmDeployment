@@ -1,0 +1,33 @@
+{{- range .Values.deployment }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  labels:
+    {{- include "addLabels" .labels | nindent 4 }}
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      {{- include "addLabels" .labels | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "addLabels" .labels | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .name }}
+        image: {{ .image }}:{{ .tag }}
+        ports:
+        - containerPort: {{ .port }}
+        {{- if .backend }}
+        env:
+        - name: FLASK_APP
+          value: run.py
+        {{- with $.Values.postgres.secret.env }}
+        - name: DATABASE_URL
+          value: postgresql://{{ .POSTGRES_USER }}:{{ .POSTGRES_PASSWORD }}@db:{{ $.Values.postgres.statefulSet.port }}/{{ .POSTGRES_DB }}
+        {{- end }}
+        {{- end }}
+---
+{{- end }}

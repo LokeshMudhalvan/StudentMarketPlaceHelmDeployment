@@ -1,0 +1,36 @@
+{{- with .Values.postgres.statefulSet }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .name }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "addLabels" .labels | nindent 6 }}
+  serviceName: {{ .headless }}
+  replicas: {{ .replicas }}
+  template:
+    metadata:
+      labels:
+      {{- include "addLabels" .labels | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .name }}
+        image: {{ .image }}:{{ .tag }}
+        ports:
+        - containerPort: {{ .port }}
+        envFrom:
+        - secretRef: 
+            name: {{ $.Values.postgres.secret.secretName }}
+        volumeMounts:
+        - name: postgres-volume-claim
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates: # Need to create PV is dynamic provisioning is not enabled
+  - metadata:
+      name: postgres-volume-claim
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+{{- end }}          

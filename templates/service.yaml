@@ -1,0 +1,18 @@
+{{- range .Values.service }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+spec:
+  type: {{ .type }}
+  selector:
+    {{-  include "addLabels" .matchLabels | nindent 4 }}
+  ports:
+    - protocol: TCP
+      port: {{ .port | default .targetPort}}
+      targetPort: {{ .targetPort }}
+  {{- if .headless }}
+  clusterIP: None
+  {{- end }}
+---
+{{- end }}

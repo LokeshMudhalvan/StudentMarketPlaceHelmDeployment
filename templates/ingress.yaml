@@ -1,0 +1,41 @@
+{{- range .Values.ingress }}
+{{- if eq .type "ingress" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .name }}
+spec:
+  ingressClassName: "traefik"
+  rules:
+  - host: "{{ .hostname }}"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .service }}
+            port:
+              number: {{ .port }}
+{{- else if eq .type "ingressroute" }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test-name
+  namespace: apps
+spec:
+  entryPoints:
+    - web
+  routes:
+  - kind: Rule
+    match: Host(`{{ .hostname }}`)
+    services:
+    - kind: Service
+      name: {{ .service }}
+      namespace: {{ .Release.Namespace }}
+      port: 80
+{{- else }}
+  {{- fail "You have entered an invalid ingress type. Please choose between ingress and ingressroute" }}              
+{{- end }}   
+---         
+{{- end }}
