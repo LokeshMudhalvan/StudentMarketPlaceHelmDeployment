@@ -1,33 +1,76 @@
-{{- range .Values.deployment }}
+{{- range $key, $value := .Values.deployments }}
+{{- if eq $key "frontend" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .name }}
+  name: {{ $value.name }}
   labels:
-    {{- include "addLabels" .labels | nindent 4 }}
+    app: {{ $value.name }}
+    {{- with $value.labels }}
+    {{- include "addLabels" . | nindent 4 }}
+    {{- end }}
 spec:
-  replicas: {{ .replicas }}
+  replicas: {{ $value.replicas }}
   selector:
     matchLabels:
-      {{- include "addLabels" .labels | nindent 6 }}
+      app: {{ $value.name }}
+      {{- with $value.labels }}
+      {{- include "addLabels" . | nindent 6 }}
+      {{- end }}
   template:
     metadata:
       labels:
-        {{- include "addLabels" .labels | nindent 8 }}
+        app: {{ $value.name }}
+        {{- with $value.labels }}
+        {{- include "addLabels" . | nindent 8 }}
+        {{- end }}
     spec:
       containers:
-      - name: {{ .name }}
-        image: {{ .image }}:{{ .tag }}
+      - name: {{ $value.name }}
+        image: {{ $value.image }}:{{ $value.tag }}
         ports:
-        - containerPort: {{ .port }}
-        {{- if .backend }}
+        - containerPort: {{ $value.targetPort }}
+
+{{- else if eq $key "backend" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $value.name }}
+  labels:
+    app: {{ $value.name }}
+    {{- with $value.labels }}
+    {{- include "addLabels" . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ $value.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $value.name }}
+      {{- with $value.labels }}
+      {{- include "addLabels" . | nindent 6 }}
+      {{- end }}
+  template:
+    metadata:
+      labels:
+        app: {{ $value.name }}
+        {{- with $value.labels }}
+        {{- include "addLabels" . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+      - name: {{ $value.name }}
+        image: {{ $value.image }}:{{ $value.tag }}
+        ports:
+        - containerPort: {{ $value.targetPort }}
         env:
         - name: FLASK_APP
           value: run.py
-        {{- with $.Values.postgres.secret.env }}
+        {{- with $.Values.postgres.env }}
         - name: DATABASE_URL
-          value: postgresql://{{ .POSTGRES_USER }}:{{ .POSTGRES_PASSWORD }}@db:{{ $.Values.postgres.statefulSet.port }}/{{ .POSTGRES_DB }}
+          value: postgresql://{{ .POSTGRES_USER }}:{{ .POSTGRES_PASSWORD }}@db:{{ $.Values.postgres.targetPort }}/{{ .POSTGRES_DB }}
         {{- end }}
-        {{- end }}
+{{- else }}
+  {{- fail "Deployment has not been enabled for types excluding backend and frontend" }}   
+{{- end }}
 ---
 {{- end }}

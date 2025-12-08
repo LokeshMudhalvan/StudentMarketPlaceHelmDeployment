@@ -1,18 +1,39 @@
-{{- range .Values.service }}
+{{- range $key, $value := .Values.deployments }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .name }}
+  name: {{ $value.serviceName }}
 spec:
-  type: {{ .type }}
+  type: ClusterIP
   selector:
-    {{-  include "addLabels" .matchLabels | nindent 4 }}
+    app: {{ $value.name }}
+    {{- with $value.labels }}
+    {{-  include "addLabels" . | nindent 4 }}
+    {{- end }}
+  ports:
+    - protocol: TCP
+      port: {{ $value.port | default $value.targetPort}}
+      targetPort: {{ $value.targetPort }}
+---
+{{- end }}
+
+{{- if .Values.postgres.enabled }}
+{{- with .Values.postgres}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .serviceName }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .name }}
+    {{- with .labels }}
+    {{-  include "addLabels" . | nindent 4 }}
+    {{- end }}
   ports:
     - protocol: TCP
       port: {{ .port | default .targetPort}}
       targetPort: {{ .targetPort }}
-  {{- if .headless }}
   clusterIP: None
-  {{- end }}
----
+{{- end }}
 {{- end }}
