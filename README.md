@@ -1,6 +1,6 @@
 # Student Marketplace Helm Deployment 
 
-This repository contains the Helm charts and configurations to deploy the Student Marketplace application on a Kubernetes cluster using MicroK8s or any standard Kubernetes setup. The deployment includes frontend, backend, and PostgreSQL database components, along with ingress configuration.
+This project deploys a production-style three-tier web application on Kubernetes, using Traefik as the Ingress controller, cert-manager for automated TLS certificate management, and MetalLB to provide LoadBalancer functionality in a bare-metal environment. External HTTPS traffic enters the cluster via a MetalLB-assigned IP and is terminated at Traefik, which performs host-based routing using IngressRoute CRDs and forwards requests to internal ClusterIP services. The frontend tier handles user interaction and communicates with the backend tier over the cluster network, while the backend implements business logic and accesses the database tier, which is isolated from external access and backed by persistent storage. TLS certificates are issued and renewed automatically by cert-manager and consumed by Traefik without downtime, resulting in a secure, cloud-agnostic, and scalable architecture that closely mirrors real-world production Kubernetes deployments.
 
 ## Features
 
