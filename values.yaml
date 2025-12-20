@@ -1,7 +1,7 @@
 deployments: 
   frontend: 
     image: lokeshmudhalvan/student-marketplace-frontend
-    tag: 0.0.7
+    tag: 0.0.10
     replicas: 1
     lables: {}
     name: student-marketplace-frontend
@@ -9,7 +9,8 @@ deployments:
     # port: 5433 can be used to set service port 
     serviceName: frontend-service
     ingressName: frontend-ingress
-    hostname: student-market-place
+    hostname: student-market-place.com
+    certSecretName: frontend-cert
 
   backend: 
     image: lokeshmudhalvan/student-marketplace-backend
@@ -20,7 +21,8 @@ deployments:
     targetPort: 5001
     serviceName: backend-service
     ingressName: backend-ingress
-    hostname: backend
+    hostname: backend.com
+    certSecretName: backend-cert
 
 postgres: 
   enabled: true
@@ -39,4 +41,7 @@ postgres:
 
 ingress: 
   enabled: true 
-  type: ingress #ingress or ingressroute 
+  type: ingressroute #ingress or ingressroute 
+
+tls: 
+  enabled: true
